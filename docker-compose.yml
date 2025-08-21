@@ -4,7 +4,6 @@ services:
   # 数据库服务
   db:
     image: mysql:8.0
-    # container_name 和 restart 在 Swarm 模式下被忽略，可以移除
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: ${DB_NAME}
@@ -12,13 +11,11 @@ services:
       MYSQL_PASSWORD: ${DB_PASSWORD}
     volumes:
       - db_data:/var/lib/mysql
-    networks:
-      - gongju-net
+    # Swarm 会自动将此服务连接到默认的 overlay 网络
 
   # API 服务
   api:
     build: .
-    # container_name 和 restart 在 Swarm 模式下被忽略，可以移除
     ports:
       - "3001:3001"
     environment:
@@ -29,17 +26,10 @@ services:
       JWT_SECRET: ${JWT_SECRET}
     depends_on:
       - db
-    networks:
-      - gongju-net
+    # Swarm 会自动将此服务连接到默认的 overlay 网络
 
-# 定义网络
-networks:
-  gongju-net:
-    # 关键改动：将驱动从 bridge 改为 overlay
-    driver: overlay
-    # 添加 attachable: true 允许我们连接到这个网络进行调试
-    attachable: true
+# 我们不再需要定义 network，让 Swarm 自动处理
 
-# 定义数据卷
+# 定义数据卷，用于持久化存储数据库数据
 volumes:
   db_data:
