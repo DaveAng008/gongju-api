@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  # 数据库服务
+  db:
+    image: mysql:8.0
+    container_name: gongju-db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - gongju-net
+
+  # API 服务
+  api:
+    # build 指令告诉 Portainer 从当前目录的 Dockerfile 构建镜像
+    build: .
+    container_name: gongju-api
+    restart: always
+    ports:
+      # 将服务器的 3001 端口映射到容器的 3001 端口
+      - "3001:3001"
+    environment:
+      DB_HOST: db # host 指向上面定义的数据库服务名称 'db'
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+    depends_on:
+      - db # 确保 API 服务在数据库服务启动之后再启动
+    networks:
+      - gongju-net
+
+# 定义网络
+networks:
+  gongju-net:
+    driver: bridge
+
+# 定义数据卷，用于持久化存储数据库数据
+volumes:
+  db_data:
